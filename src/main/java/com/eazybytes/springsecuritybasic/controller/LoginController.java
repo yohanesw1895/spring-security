@@ -4,7 +4,9 @@ import com.eazybytes.springsecuritybasic.model.Customer;
 import com.eazybytes.springsecuritybasic.repository.CustomerRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,5 +36,20 @@ public class LoginController {
         Customer result = customerRepository.save(customer);
         result.setPassword(null);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(
+            value = "/user",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+
+    public ResponseEntity<Customer> getUserDetailsAfterLogin(
+            Authentication authentication
+    ) throws Exception {
+
+        return ResponseEntity.ok(
+                customerRepository.findOneByEmail(authentication.getName())
+                    .orElseThrow(() -> new Exception("Data tidak ditemukan"))
+        );
     }
 }
