@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.Date;
+
 @RestController
 public class LoginController {
 
@@ -33,6 +35,7 @@ public class LoginController {
     ) {
 
         customer.setPassword(passwordEncoder.encode(customer.getPassword()));
+        customer.setCreateDt(new Date(System.currentTimeMillis()));
         Customer result = customerRepository.save(customer);
         result.setPassword(null);
         return ResponseEntity.ok(result);
