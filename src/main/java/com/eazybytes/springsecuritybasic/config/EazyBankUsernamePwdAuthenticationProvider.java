@@ -1,5 +1,6 @@
 package com.eazybytes.springsecuritybasic.config;
 
+import com.eazybytes.springsecuritybasic.model.Authority;
 import com.eazybytes.springsecuritybasic.repository.CustomerRepository;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,8 +12,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class EazyBankUsernamePwdAuthenticationProvider implements AuthenticationProvider {
@@ -25,6 +27,12 @@ public class EazyBankUsernamePwdAuthenticationProvider implements Authentication
         this.passwordEncoder = passwordEncoder;
     }
 
+    private List<GrantedAuthority> getGrantedAuthorities(Set<Authority> authorities) {
+        return authorities
+                .stream()
+                .map(d -> new SimpleGrantedAuthority(d.getName()))
+                .collect(Collectors.toList());
+    }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -38,8 +46,7 @@ public class EazyBankUsernamePwdAuthenticationProvider implements Authentication
 
                     if (passwordEncoder.matches(pwd, d.getPassword())) {
 
-                        List<GrantedAuthority> authorities = new ArrayList<>();
-                        authorities.add(new SimpleGrantedAuthority(d.getRole()));
+                        List<GrantedAuthority> authorities = getGrantedAuthorities(d.getAuthorities());
 
                         return new UsernamePasswordAuthenticationToken(username, pwd, authorities);
                     }

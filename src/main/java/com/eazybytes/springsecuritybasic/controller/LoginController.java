@@ -37,7 +37,6 @@ public class LoginController {
         customer.setPassword(passwordEncoder.encode(customer.getPassword()));
         customer.setCreateDt(new Date(System.currentTimeMillis()));
         Customer result = customerRepository.save(customer);
-        result.setPassword(null);
         return ResponseEntity.ok(result);
     }
 
