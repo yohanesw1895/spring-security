@@ -1,8 +1,6 @@
 package com.eazybytes.springsecuritybasic.config;
 
-import com.eazybytes.springsecuritybasic.filter.AuthoritiesLoggingAfterFilter;
-import com.eazybytes.springsecuritybasic.filter.CsrfCookieFilter;
-import com.eazybytes.springsecuritybasic.filter.RequestValidationBeforeFilter;
+import com.eazybytes.springsecuritybasic.filter.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -29,8 +28,9 @@ public class SecurityConfig {
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
         requestHandler.setCsrfRequestAttributeName("_csrf");
         http
-            .securityContext((sc) -> sc.requireExplicitSave(false))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+//            .securityContext((sc) -> sc.requireExplicitSave(false))
+//            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .cors(cors -> corsConfigurationSource())
             .csrf(
                 (csrf) ->
@@ -39,8 +39,10 @@ public class SecurityConfig {
                             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             )
             .addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class)
+            .addFilterBefore(new JWTTokenValidatorFilter(), BasicAuthenticationFilter.class)
             .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
             .addFilterAfter(new AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter.class)
+            .addFilterAfter(new JWTTokenGeneratorFilter(), BasicAuthenticationFilter.class)
             .authorizeHttpRequests((requests) ->
                 requests
                     .requestMatchers("/myAccount").hasRole("USER")
@@ -63,6 +65,7 @@ public class SecurityConfig {
         config.setAllowedMethods(List.of("*"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization"));
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
