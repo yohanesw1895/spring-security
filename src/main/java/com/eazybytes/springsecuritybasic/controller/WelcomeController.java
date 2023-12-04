@@ -1,17 +1,17 @@
 package com.eazybytes.springsecuritybasic.controller;
 
-import org.apache.catalina.security.SecurityUtil;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@Controller
 public class WelcomeController {
 
     @GetMapping("/")
-    public String sayWelcome() {
+    public String sayWelcome(OAuth2AuthenticationToken token) {
 
-        System.out.println("Welcome to Spring Application with Security ");
-        return "Welcome to Spring Application with Security";
+        System.out.println("Welcome to Spring Application with Security : " + token.getPrincipal());
+        return "secure.html";
     }
 
 }

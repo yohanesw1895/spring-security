@@ -1,107 +1,31 @@
 package com.eazybytes.springsecuritybasic.config;
 
-import com.eazybytes.springsecuritybasic.filter.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-        requestHandler.setCsrfRequestAttributeName("_csrf");
         http
-//            .securityContext((sc) -> sc.requireExplicitSave(false))
-//            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .cors(cors -> corsConfigurationSource())
-            .csrf(
-                (csrf) ->
-                        csrf
-                            .csrfTokenRequestHandler(requestHandler).ignoringRequestMatchers("/contact", "/register")
-                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            )
-            .addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class)
-            .addFilterBefore(new JWTTokenValidatorFilter(), BasicAuthenticationFilter.class)
-            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-            .addFilterAfter(new AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter.class)
-            .addFilterAfter(new JWTTokenGeneratorFilter(), BasicAuthenticationFilter.class)
-            .authorizeHttpRequests((requests) ->
-                requests
-                    .requestMatchers("/myAccount").hasRole("USER")
-                    .requestMatchers("/myBalance").hasAnyRole("USER", "ADMIN")
-                    .requestMatchers("/myCards").hasRole("USER")
-                    .requestMatchers("/myLoans").authenticated()
-                    .requestMatchers( "/","/user").authenticated()
-                    .requestMatchers("/notices", "/contact", "/register").permitAll()
-            )
-            .formLogin(withDefaults())
-            .httpBasic(withDefaults());
-
+            .authorizeHttpRequests((requests) -> requests.anyRequest().authenticated()).oauth2Login(Customizer.withDefaults());
         return http.build();
     }
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("*"));
-        config.setAllowCredentials(true);
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization"));
-        config.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
 //    @Bean
-//    public UserDetailsService userDetailsService(DataSource dataSource) {
-//
-//
-//        return new JdbcUserDetailsManager(dataSource);
+//    public ClientRegistrationRepository clientRepository() {
+//        ClientRegistration clientReg = clientRegistration();
+//        return new InMemoryClientRegistrationRepository(clientReg);
 //    }
-
-
-
-    // *IN MEMORY USER
-//    @Bean
-//    public InMemoryUserDetailsManager userDetailsService() {
 //
-//        UserDetails admin = User.withDefaultPasswordEncoder()
-//                .username("admin")
-//                .password("12345")
-//                .authorities("admin")
-//                .build(),
-//                user = User.withDefaultPasswordEncoder()
-//                .username("user")
-//                .password("12345")
-//                .authorities("read")
-//                .build();
-//
-//        return new InMemoryUserDetailsManager(admin, user);
-//    }
+//    private ClientRegistration clientRegistration() {
+//		return CommonOAuth2Provider.GITHUB.getBuilder("github").clientId("b24e5d7a3b3ecdc6426b")
+//	           .clientSecret("32ae1fe47799fb93928b3ff0949464f40d8322c6").build();
+//	 }
+
 
 }
