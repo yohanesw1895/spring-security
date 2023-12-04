@@ -1,7 +1,7 @@
 package com.eazybytes.springsecuritybasic.controller;
 
-import com.eazybytes.springsecuritybasic.model.Accounts;
-import com.eazybytes.springsecuritybasic.repository.AccountRepository;
+import com.eazybytes.springsecuritybasic.model.Customer;
+import com.eazybytes.springsecuritybasic.repository.CustomerRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,21 +11,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AccountController {
 
-    private final AccountRepository accountRepository;
+    private final CustomerRepository customerRepository;
 
-    public AccountController(AccountRepository accountRepository) {
-        this.accountRepository = accountRepository;
+    public AccountController(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
     }
 
     @GetMapping(
             value = "/myAccount",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<Accounts> getMyAccount(@RequestParam int id) throws Exception {
+    public ResponseEntity<Customer> getMyAccount(@RequestParam String email) throws Exception {
 
         System.out.println("Here are the account details from the DB");
         return ResponseEntity.ok(
-                accountRepository.findOneByCustomerId(id)
+                customerRepository.findOneByEmail(email)
                         .orElseThrow(() -> new Exception("data not found"))
         );
     }

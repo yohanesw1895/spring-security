@@ -1,27 +1,31 @@
 package com.eazybytes.springsecuritybasic.controller;
 
+import com.eazybytes.springsecuritybasic.config.KeycloakRoleConverter;
 import com.eazybytes.springsecuritybasic.model.Customer;
 import com.eazybytes.springsecuritybasic.repository.CustomerRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.sql.Date;
+import java.util.Map;
 
 @RestController
 public class LoginController {
 
     private final CustomerRepository customerRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public LoginController(CustomerRepository customerRepository, PasswordEncoder passwordEncoder) {
+    public LoginController(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping(
@@ -34,7 +38,7 @@ public class LoginController {
             @RequestBody Customer customer
     ) {
 
-        customer.setPassword(passwordEncoder.encode(customer.getPassword()));
+//        customer.setPassword(passwordEncoder.encode(customer.getPassword()));
         customer.setCreateDt(new Date(System.currentTimeMillis()));
         Customer result = customerRepository.save(customer);
         return ResponseEntity.ok(result);
@@ -49,8 +53,12 @@ public class LoginController {
             Authentication authentication
     ) throws Exception {
 
+//        Principal user = authentication.getPrincipal();
+        String email = "";
+
+
         return ResponseEntity.ok(
-                customerRepository.findOneByEmail(authentication.getName())
+                customerRepository.findOneByEmail(email)
                     .orElseThrow(() -> new Exception("Data tidak ditemukan"))
         );
     }

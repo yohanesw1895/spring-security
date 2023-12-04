@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -27,9 +28,11 @@ public class SecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
         requestHandler.setCsrfRequestAttributeName("_csrf");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
+
         http
-//            .securityContext((sc) -> sc.requireExplicitSave(false))
-//            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .cors(cors -> corsConfigurationSource())
             .csrf(
@@ -38,11 +41,6 @@ public class SecurityConfig {
                             .csrfTokenRequestHandler(requestHandler).ignoringRequestMatchers("/contact", "/register")
                             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             )
-            .addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class)
-            .addFilterBefore(new JWTTokenValidatorFilter(), BasicAuthenticationFilter.class)
-            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-            .addFilterAfter(new AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter.class)
-            .addFilterAfter(new JWTTokenGeneratorFilter(), BasicAuthenticationFilter.class)
             .authorizeHttpRequests((requests) ->
                 requests
                     .requestMatchers("/myAccount").hasRole("USER")
@@ -52,8 +50,11 @@ public class SecurityConfig {
                     .requestMatchers( "/","/user").authenticated()
                     .requestMatchers("/notices", "/contact", "/register").permitAll()
             )
-            .formLogin(withDefaults())
-            .httpBasic(withDefaults());
+            .oauth2ResourceServer(
+                (oauth2ResourceServer) -> oauth2ResourceServer
+                        .jwt((jwt) -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+            );
+
 
         return http.build();
     }
@@ -71,37 +72,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-//    @Bean
-//    public UserDetailsService userDetailsService(DataSource dataSource) {
-//
-//
-//        return new JdbcUserDetailsManager(dataSource);
-//    }
-
-
-
-    // *IN MEMORY USER
-//    @Bean
-//    public InMemoryUserDetailsManager userDetailsService() {
-//
-//        UserDetails admin = User.withDefaultPasswordEncoder()
-//                .username("admin")
-//                .password("12345")
-//                .authorities("admin")
-//                .build(),
-//                user = User.withDefaultPasswordEncoder()
-//                .username("user")
-//                .password("12345")
-//                .authorities("read")
-//                .build();
-//
-//        return new InMemoryUserDetailsManager(admin, user);
-//    }
 
 }
